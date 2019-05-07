@@ -1,0 +1,9 @@
+bin
+.DS_Store
+.idea
+lib
+*.zip
+include
+**/*.jpg
+*.swp
+*.h5
