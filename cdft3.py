@@ -1,5 +1,5 @@
 #####
-# MobileNetV2 Cats and Dogs Fine Tuning with dataset optimization
+# MobileNetV2 Monkey Species Fine Tuning with dataset optimization
 ####
 from tensorflow.python.keras.models import Model, Sequential
 from tensorflow.python.keras.layers import Flatten, Dense, Dropout
@@ -46,7 +46,7 @@ eval_model.compile(loss='categorical_crossentropy',
                    metrics=['accuracy', 'mean_squared_error'])
 
 with open('monkeylabel.json') as json_file:
-    dogscatsdict = json.load(json_file)
+    monkeydict = json.load(json_file)
 
 helpful_data = list()
 helpful_labels = list()
@@ -58,7 +58,7 @@ for x, y in pretrain_batches:
     for i, samp in enumerate(x):
         pred = eval_model.predict(np.array([samp]), verbose=1)
         top_indices = pred[0].argsort()[-3:][::-1][0]
-        is_related = str(top_indices) in dogscatsdict
+        is_related = str(top_indices) in monkeydict
         if not is_related:
             top_pred = decode_predictions(pred, top=3)[0][0]
             print('Predicted:', top_pred)
