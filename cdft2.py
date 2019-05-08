@@ -4,21 +4,17 @@
 from tensorflow.python.keras.models import Model, Sequential
 from tensorflow.python.keras.layers import Flatten, Dense, Dropout
 from tensorflow.python.keras.applications.mobilenet_v2 import MobileNetV2, preprocess_input, decode_predictions
-from tensorflow.python.keras.optimizers import Adam
 from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
 import tensorflow as tf
 import numpy as np
 import json
-import cv2
 
 
 DATASET_PATH  = './data'
 IMAGE_SIZE    = (160, 160)
 NUM_CLASSES   = 2
 BATCH_SIZE    = 32  # try reducing batch size or freeze more layers if your GPU runs out of memory
-FREEZE_LAYERS = 2  # freeze the first this many layers for training
-NUM_EPOCHS    = 10
-WEIGHTS_FINAL = 'model-resnet50-final.h5'
+NUM_EPOCHS    = 20
 
 
 pretrain_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
@@ -72,14 +68,8 @@ for x, y in pretrain_batches:
             helpful_labels.append(y[i])
         count += 1
         print(count)
-    #     break
-    # break
     if count == 2007:
         break
-
-        # s = ((samp-samp.min())/(samp.max()-samp.min()))*255
-        # s = s.astype(np.uint8)
-        # cv2.imshow('window', s)
 helpful_data = np.array(helpful_data)
 helpful_labels = np.array(helpful_labels)
 harmful_data = np.array(harmful_data)

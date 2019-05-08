@@ -16,14 +16,13 @@ NUM_CLASSES   = 2
 BATCH_SIZE    = 32  # try reducing batch size or freeze more layers if your GPU runs out of memory
 FREEZE_LAYERS = 2  # freeze the first this many layers for training
 NUM_EPOCHS    = 20
-WEIGHTS_FINAL = 'model-resnet50-final.h5'
 
 
 train_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
 train_batches = train_datagen.flow_from_directory(DATASET_PATH + '/train',
                                                   target_size=IMAGE_SIZE,
                                                   interpolation='bicubic',
-                                                  class_mode='binary',
+                                                  class_mode='categorical',
                                                   shuffle=True,
                                                   batch_size=BATCH_SIZE)
 
@@ -31,7 +30,7 @@ valid_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
 valid_batches = valid_datagen.flow_from_directory(DATASET_PATH + '/validation',
                                                   target_size=IMAGE_SIZE,
                                                   interpolation='bicubic',
-                                                  class_mode='binary',
+                                                  class_mode='categorical',
                                                   shuffle=False,
                                                   batch_size=BATCH_SIZE)
 # show class indices
@@ -59,10 +58,13 @@ model.add(Dropout(0.5))
 model.add(Dense(1, name='prediction_layer'))
 base_learning_rate = 0.0001
 model.compile(optimizer=tf.keras.optimizers.RMSprop(lr=base_learning_rate/10),
-              loss='binary_crossentropy',
+              loss=tf.keras.losses.categorical_crossentropy,
               metrics=['accuracy'])
 hist = model.fit_generator(train_batches,
                            validation_data=valid_batches,
                            epochs=NUM_EPOCHS,
                            steps_per_epoch=train_batches.samples // BATCH_SIZE,
                            validation_steps=valid_batches.samples // BATCH_SIZE)
+print(hist.history['acc'])
+print(hist.history['val_acc'])
+model.save('cdft_mobilenet3.h5')
