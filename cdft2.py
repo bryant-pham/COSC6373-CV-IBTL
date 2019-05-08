@@ -8,6 +8,8 @@ from tensorflow.python.keras.optimizers import Adam
 from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
 import tensorflow as tf
 import numpy as np
+import json
+import cv2
 
 
 DATASET_PATH  = './data'
@@ -19,13 +21,13 @@ NUM_EPOCHS    = 10
 WEIGHTS_FINAL = 'model-resnet50-final.h5'
 
 
-train_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
-train_batches = train_datagen.flow_from_directory(DATASET_PATH + '/train',
-                                                  target_size=IMAGE_SIZE,
-                                                  interpolation='bicubic',
-                                                  class_mode='binary',
-                                                  shuffle=True,
-                                                  batch_size=BATCH_SIZE)
+pretrain_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
+pretrain_batches = pretrain_datagen.flow_from_directory(DATASET_PATH + '/train',
+                                                        target_size=IMAGE_SIZE,
+                                                        interpolation='bicubic',
+                                                        class_mode='binary',
+                                                        shuffle=True,
+                                                        batch_size=2007)
 
 valid_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
 valid_batches = valid_datagen.flow_from_directory(DATASET_PATH + '/validation',
@@ -36,7 +38,7 @@ valid_batches = valid_datagen.flow_from_directory(DATASET_PATH + '/validation',
                                                   batch_size=BATCH_SIZE)
 # show class indices
 print('****************')
-for cls, idx in train_batches.class_indices.items():
+for cls, idx in pretrain_batches.class_indices.items():
     print('Class #{} = {}'.format(idx, cls))
 print('****************')
   
@@ -46,15 +48,45 @@ eval_model.compile(loss='categorical_crossentropy',
               optimizer = tf.keras.optimizers.RMSprop(lr=base_learning_rate),
               metrics=['accuracy', 'mean_squared_error'])
 
-for x,y in train_batches:
-    for samp in x:
-        samp=np.array([samp])
-        label=np.zeros((1,1000))
-        label[:,254]=1
-        loss=eval_model.evaluate(samp,label,batch_size=1,verbose=1)
-        print(loss)
-        #loss=eval_model.predict(samp,verbose=1)
-        #print('Predicted:', decode_predictions(loss, top=3)[0])
+with open('dogscatslabels.json') as json_file:
+    dogscatsdict = json.load(json_file)
+
+helpful_data = list()
+helpful_labels = list()
+harmful_data = list()
+harmful_predicted_labels = list()
+
+count = 0
+for x, y in pretrain_batches:
+    for i, samp in enumerate(x):
+        pred = eval_model.predict(np.array([samp]), verbose=1)
+        top_indices = pred[0].argsort()[-3:][::-1][0]
+        is_related = str(top_indices) in dogscatsdict
+        if not is_related:
+            top_pred = decode_predictions(pred, top=3)[0][0]
+            print('Predicted:', top_pred)
+            harmful_data.append(samp)
+            harmful_predicted_labels.append(top_pred)
+        else:
+            helpful_data.append(samp)
+            helpful_labels.append(y[i])
+        count += 1
+        print(count)
+    #     break
+    # break
+    if count == 2007:
+        break
+
+        # s = ((samp-samp.min())/(samp.max()-samp.min()))*255
+        # s = s.astype(np.uint8)
+        # cv2.imshow('window', s)
+helpful_data = np.array(helpful_data)
+helpful_labels = np.array(helpful_labels)
+harmful_data = np.array(harmful_data)
+harmful_predicted_labels = np.array(harmful_predicted_labels)
+
+train_datagen = ImageDataGenerator()
+train_batches = train_datagen.flow(helpful_data, helpful_labels)
 
 base_model = MobileNetV2(include_top=False, weights='imagenet', input_shape=(IMAGE_SIZE[0],IMAGE_SIZE[1],3))
 base_model.trainable = True 
@@ -64,7 +96,7 @@ fine_tune_at = 100
 
 # Freeze all the layers before the `fine_tune_at` layer
 for layer in base_model.layers[:fine_tune_at]:
-    layer.trainable =  False
+    layer.trainable = False
 
 model = Sequential()
 model.add(base_model)
@@ -73,12 +105,13 @@ model.add(Dropout(0.5))
 model.add(Dense(1, name='prediction_layer'))
 
 base_learning_rate = 0.0001
-model.compile(optimizer=tf.keras.optimizers.RMSprop(lr=base_learning_rate),
+model.compile(optimizer=tf.keras.optimizers.RMSprop(lr=base_learning_rate/10),
               loss='binary_crossentropy',
               metrics=['accuracy'])
 
-#hist = model.fit_generator(train_batches,
-#                           validation_data=valid_batches,
-#                           epochs=NUM_EPOCHS,
-#                           steps_per_epoch=train_batches.samples // BATCH_SIZE,
-#                           validation_steps=valid_batches.samples // BATCH_SIZE)
+hist = model.fit_generator(train_batches,
+                          validation_data=valid_batches,
+                          epochs=NUM_EPOCHS,
+                          steps_per_epoch=1800 // BATCH_SIZE,
+                          validation_steps=valid_batches.samples // BATCH_SIZE)
+model.save('cdft_mobilenet_optimized1.h5')
