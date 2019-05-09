@@ -1,4 +1,4 @@
-Requirements:
+####Requirements:
 * Python 3.6.5
 
 To install:
@@ -18,7 +18,7 @@ Experiment scripts:
 * monkey_base.py
 * monkey_ibtl.py
 
-How to run Dogs vs Cats experiment:
+####How to run Dogs vs Cats experiment:
 1. Download Dogs vs Cats data: [https://www.kaggle.com/c/dogs-vs-cats/data](https://www.kaggle.com/c/dogs-vs-cats/data)
 2. Extract dog training images into data/dogscats/train/dogs
 3. Extract cat training images into data/dogscats/train/cats
@@ -30,7 +30,7 @@ python dogscats_base.py
 python dogscats_ibtl.py
 ```
 
-How to run Monkey Species experiment:
+####How to run Monkey Species experiment:
 1. Download Monkey Species data: [https://www.kaggle.com/slothkong/10-monkey-species](https://www.kaggle.com/slothkong/10-monkey-species)
 2. Extract monkey training image folders into data/monkey/train
 3. Extract monkey validation images into data/monkey/validation
