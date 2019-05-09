@@ -39,3 +39,10 @@ python dogscats_ibtl.py
 python monkey_base.py
 python monkey_ibtl.py
 ```
+
+#### How to predict monkey species:
+1. Download Monkey Species data: [https://www.kaggle.com/slothkong/10-monkey-species](https://www.kaggle.com/slothkong/10-monkey-species)
+2. Run:
+```bash
+python predict_monkey.py <path_to_monkey_image>
+```
