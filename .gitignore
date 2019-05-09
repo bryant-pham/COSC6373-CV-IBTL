@@ -6,4 +6,3 @@ lib
 include
 **/*.jpg
 *.swp
-*.h5
